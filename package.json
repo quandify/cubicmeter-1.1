@@ -1,0 +1,13 @@
+{
+  "name": "cubicmeter-1.1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:quandify/cubicmeter-1.1.git",
+  "author": "Peter Eriksson <peter.eriksson@quandify.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  }
+}
