@@ -210,13 +210,13 @@ var parseBatteryStatus = function (input) {
     return "Low battery";
   }
 
-  return undefined;
+  return "";
 };
 
 var parseErrorCode = function (errorCode) {
   switch (errorCode) {
     case 0:
-      return undefined;
+      return "";
     case 384:
       return "Reverse flow";
     default:
@@ -225,28 +225,32 @@ var parseErrorCode = function (errorCode) {
 };
 
 export var normalizeUplink = function (input) {
+  if (input.type != "statusReport") {
+    return {};
+  }
+
   return {
     data: {
       air: {
-        temperature: input.data.decoded.ambientTemperature, // °C
+        temperature: input.payload.ambientTemperature, // °C
       },
       water: {
         temperature: {
-          min: input.data.decoded.waterTemperatureMin, // °C
-          max: input.data.decoded.waterTemperatureMax, // °C
+          min: input.payload.waterTemperatureMin, // °C
+          max: input.payload.waterTemperatureMax, // °C
         },
-        leak: leakStates[input.data.decoded.leak_state], // String
+        leak: leakStates[input.payload.leak_state] ?? "", // String
       },
       metering: {
         water: {
-          total: input.data.decoded.totalVolume, // L
+          total: input.payload.totalVolume, // L
         },
       },
-      battery: input.data.decoded.batteryRecovered / 1000, // V
+      battery: input.payload.batteryRecovered / 1000, // V
     },
     warnings: [
-      parseErrorCode(input.data.decoded.errorCode),
-      parseBatteryStatus(input.data.decoded.batteryRecovered),
+      parseErrorCode(input.payload.errorCode),
+      parseBatteryStatus(input.payload.batteryRecovered),
     ].filter((item) => item),
   };
 };

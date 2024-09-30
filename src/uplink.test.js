@@ -1,9 +1,13 @@
-import { describe, it, mock } from "node:test";
+import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import decodeUplink, { base64ToDecArray, hexToDecArray } from "./uplink.js";
+import decodeUplink, {
+  base64ToDecArray,
+  hexToDecArray,
+  normalizeUplink,
+} from "./uplink.js";
 
-describe("uplink", () => {
-  describe("ping", () => {
+describe("decode uplink", async () => {
+  describe("ping", async () => {
     var input = {
       fPort: 0,
       bytes: [],
@@ -22,13 +26,13 @@ describe("uplink", () => {
     });
   });
 
-  describe("status report", () => {
+  describe("status report", async () => {
     let input = {
       fPort: 1,
       bytes: [],
     };
 
-    describe("format", () => {
+    describe("format", async () => {
       it("normal", async () => {
         input.bytes = hexToDecArray(
           "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
@@ -78,7 +82,7 @@ describe("uplink", () => {
       });
     });
 
-    describe("leak", () => {
+    describe("leak", async () => {
       it("small", async () => {
         input.bytes = hexToDecArray(
           "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
@@ -110,7 +114,7 @@ describe("uplink", () => {
       });
     });
 
-    describe("error", () => {
+    describe("error", async () => {
       it("no sensing", async () => {
         input.bytes = hexToDecArray(
           "3C1BE40100809520020010392F00000000000000000000E4E986C461"
@@ -146,7 +150,7 @@ describe("uplink", () => {
     });
   });
 
-  describe("response", () => {
+  describe("response", async () => {
     let input = {
       fPort: 6,
       bytes: [],
@@ -174,8 +178,8 @@ describe("uplink", () => {
       );
     });
 
-    describe("none", () => {
-      it("perform lorarwan reset", () => {
+    describe("none", async () => {
+      it("perform lorarwan reset", async () => {
         input.bytes = base64ToDecArray("ZgAA=");
 
         var result = decodeUplink(input);
@@ -185,7 +189,7 @@ describe("uplink", () => {
       });
     });
 
-    describe("status report", () => {
+    describe("status report", async () => {
       it("perform volume reset", () => {
         input.bytes = base64ToDecArray(
           "ZQABtl0BAACAAAAAAAAAAAAAAAAAAAAAAAC/u1RXWg=="
@@ -198,8 +202,8 @@ describe("uplink", () => {
       });
     });
 
-    describe("hardware report", () => {
-      describe("format", () => {
+    describe("hardware report", async () => {
+      describe("format", async () => {
         it("normal", () => {
           input.bytes = base64ToDecArray(
             "MgACEwAAFgIFPwAAAAAA7VpBPfxEnCsAAAEAAAAAAAEBAAAAAAA="
@@ -278,7 +282,7 @@ describe("uplink", () => {
         });
       });
 
-      it("set pipe index", () => {
+      it("set pipe index", async () => {
         input.bytes = hexToDecArray(
           "0400021000001602053f0100000300e3ddcbb1bd758732000001000000000000010000000000"
         );
@@ -289,7 +293,7 @@ describe("uplink", () => {
         assert.strictEqual(result.payload.type, "hardwareReport");
       });
 
-      it("set app state", () => {
+      it("set app state", async () => {
         input.bytes = hexToDecArray(
           "0400021000001602053f0100000300e3ddcbb1bd758732000001000000000000010000000000"
         );
@@ -301,9 +305,9 @@ describe("uplink", () => {
       });
     });
 
-    describe("settings report", () => {
-      describe("format", () => {
-        it("normal", () => {
+    describe("settings report", async () => {
+      describe("format", async () => {
+        it("normal", async () => {
           input.bytes = hexToDecArray(
             "13000401c0a80000580200000000001e00008d27000000000000000000000000000000000000000000"
           );
@@ -356,7 +360,7 @@ describe("uplink", () => {
         });
       });
 
-      it("set lorawan report interval", () => {
+      it("set lorawan report interval", async () => {
         input.bytes = hexToDecArray(
           "13000401c0a80000580200000000001e00008d27000000000000000000000000000000000000000000"
         );
@@ -370,8 +374,90 @@ describe("uplink", () => {
   });
 });
 
-describe("util", () => {
-  describe("hex to decimal array", () => {
+describe.only("normalize uplink", async () => {
+  var input = {};
+
+  it("ping", async () => {
+    var result = normalizeUplink(input);
+    assert.deepStrictEqual(result, {});
+  });
+
+  it("response", async () => {
+    var result = normalizeUplink(input);
+    assert.deepStrictEqual(result, {});
+  });
+
+  describe("status report", async () => {
+    var input = {};
+
+    beforeEach(() => {
+      input = {
+        fPort: 1,
+        hexBytes: "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455",
+        length: 28,
+        payload: {
+          ambientTemperature: 22.5,
+          batteryActive: 3608,
+          batteryRecovered: 3640,
+          errorCode: 0,
+          isSensing: true,
+          leakState: 2,
+          totalVolume: 5342,
+          waterTemperatureMax: 22,
+          waterTemperatureMin: 21.5,
+        },
+        type: "statusReport",
+      };
+    });
+
+    it("normal", async () => {
+      var result = normalizeUplink(input);
+      assert.deepStrictEqual(result, {
+        data: {
+          air: {
+            temperature: 22.5,
+          },
+          battery: 3.64,
+          metering: {
+            water: {
+              total: 5342,
+            },
+          },
+          water: {
+            leak: "",
+            temperature: {
+              max: 22,
+              min: 21.5,
+            },
+          },
+        },
+        warnings: [],
+      });
+    });
+
+    it("low battery", async () => {
+      input.payload.batteryRecovered = 1100;
+      var result = normalizeUplink(input);
+      assert.strictEqual(result.data.battery, 1.1);
+      assert.deepStrictEqual(result.warnings, ["Low battery"]);
+    });
+
+    it("reverse flow", async () => {
+      input.payload.errorCode = 384;
+      var result = normalizeUplink(input);
+      assert.deepStrictEqual(result.warnings, ["Reverse flow"]);
+    });
+
+    it("contact support", async () => {
+      input.payload.errorCode = 999;
+      var result = normalizeUplink(input);
+      assert.deepStrictEqual(result.warnings, ["Contact support, error 999"]);
+    });
+  });
+});
+
+describe("util", async () => {
+  describe("hex to decimal array", async () => {
     it("normal", async () => {
       var result = hexToDecArray(
         "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
