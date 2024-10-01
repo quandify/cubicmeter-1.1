@@ -368,7 +368,7 @@ describe("decode uplink", async () => {
   });
 });
 
-describe.only("normalize uplink", async () => {
+describe("normalize uplink", async () => {
   var input = {};
 
   it("ping", async () => {

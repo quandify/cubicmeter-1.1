@@ -51,15 +51,27 @@ var pipeTypes = {
   17: "distpipe",
 };
 
+/**
+ * The 'decodeUplink' function takes a message object and returns a parsed data object.
+ * @param input Message object
+ * @param input.fPort Fport.
+ * @param input.bytes Byte array.
+ */
 export default function decodeUplink(input) {
+  const buffer = new ArrayBuffer(input.bytes.length);
+  const data = new DataView(buffer);
+  for (const index in input.bytes) {
+    data.setUint8(index, input.bytes[index]);
+  }
+
   var payload = {};
 
   switch (input.fPort) {
     case 1: // Status report
-      payload = statusReportDecoder(input.bytes).data;
+      payload = statusReportDecoder(data).data;
       break;
     case 6: // Response
-      payload = responseDecoder(input.bytes);
+      payload = responseDecoder(data);
       break;
   }
 
@@ -72,16 +84,16 @@ export default function decodeUplink(input) {
   };
 }
 
-var statusReportDecoder = function (bytes) {
-  if (bytes.length != 28) {
+const LSB = true;
+
+var statusReportDecoder = function (data) {
+  if (data.byteLength != 28) {
     throw new Error(
-      `Wrong payload length (${bytes.length}), should be 28 bytes`
+      `Wrong payload length (${data.byteLength}), should be 28 bytes`
     );
   }
 
-  const data = Buffer.from(bytes);
-
-  const error = data.readUInt16LE(4);
+  const error = data.getUint16(4, LSB);
 
   // The is sensing value is a bit flag of the error field
   const isSensing = !(error & 0x8000);
@@ -92,31 +104,29 @@ var statusReportDecoder = function (bytes) {
     data: {
       errorCode: errorCode, // current error code
       isSensing: isSensing, // is the ultrasonic sensor sensing water
-      totalVolume: data.readUInt32LE(6), // All-time aggregated water usage in litres
-      leakState: data.readUInt8(22), // current water leakage state
-      batteryActive: decodeBatteryLevel(data.readUInt8(23)), // battery mV active
-      batteryRecovered: decodeBatteryLevel(data.readUInt8(24)), // battery mV recovered
-      waterTemperatureMin: decodeTemperature(data.readUInt8(25)), // min water temperature since last statusReport
-      waterTemperatureMax: decodeTemperature(data.readUInt8(26)), // max water temperature since last statusReport
-      ambientTemperature: decodeTemperature(data.readUInt8(27)), // current ambient temperature
+      totalVolume: data.getUint32(6, LSB), // All-time aggregated water usage in litres
+      leakState: data.getUint8(22), // current water leakage state
+      batteryActive: decodeBatteryLevel(data.getUint8(23)), // battery mV active
+      batteryRecovered: decodeBatteryLevel(data.getUint8(24)), // battery mV recovered
+      waterTemperatureMin: decodeTemperature(data.getUint8(25)), // min water temperature since last statusReport
+      waterTemperatureMax: decodeTemperature(data.getUint8(26)), // max water temperature since last statusReport
+      ambientTemperature: decodeTemperature(data.getUint8(27)), // current ambient temperature
     },
   };
 };
 
-var responseDecoder = function (bytes) {
-  const data = Buffer.from(bytes);
-
-  const responseStatus = responseStatuses[data.readUInt8(1)];
+var responseDecoder = function (data) {
+  const responseStatus = responseStatuses[data.getUint8(1)];
   if (responseStatus === undefined) {
-    throw new Error(`Invalid response status: ${data.readUInt8(1)}`);
+    throw new Error(`Invalid response status: ${data.getUint8(1)}`);
   }
 
-  const responseType = responseTypes[data.readUInt8(2)];
+  const responseType = responseTypes[data.getUint8(2)];
   if (responseType === undefined) {
-    throw new Error(`Invalid response type: ${data.readUInt8(2)}`);
+    throw new Error(`Invalid response type: ${data.getUint8(2)}`);
   }
 
-  const dataPayload = data.slice(3);
+  const dataPayload = new DataView(data.buffer, 3);
 
   var responseData = {
     type: undefined,
@@ -136,7 +146,7 @@ var responseDecoder = function (bytes) {
   }
 
   return {
-    fPort: data.readUInt8(0),
+    fPort: data.getUint8(0),
     status: responseStatus,
     type: responseData.type,
     data: responseData.data,
@@ -144,32 +154,32 @@ var responseDecoder = function (bytes) {
 };
 
 var hardwareReportDecoder = function (data) {
-  if (data.length != 35) {
+  if (data.byteLength != 35) {
     throw new Error(
-      `Wrong payload length (${data.length}), should be 35 bytes`
+      `Wrong payload length (${data.byteLength}), should be 35 bytes`
     );
   }
 
-  const appState = appStates[data.readUInt8(5)];
+  const appState = appStates[data.getUint8(5)];
   if (appState === undefined) {
-    throw new Error(`Invalid app state (${data.readUInt8(5)})`);
+    throw new Error(`Invalid app state (${data.getUint8(5)})`);
   }
 
-  const pipeType = pipeTypes[data.readUInt8(28)];
+  const pipeType = pipeTypes[data.getUint8(28)];
   if (pipeType === undefined) {
-    throw new Error(`Invalid pipe index (${data.readUInt8(28)})`);
+    throw new Error(`Invalid pipe index (${data.getUint8(28)})`);
   }
 
-  const firmwareVersion = intToSemver(data.readUInt32LE(0));
+  const firmwareVersion = intToSemver(data.getUint32(0, LSB));
 
   return {
     type: "hardwareReport",
     data: {
       firmwareVersion,
-      hardwareVersion: data.readUInt8(4),
+      hardwareVersion: data.getUint8(4),
       appState: appState,
       pipe: {
-        id: data.readUInt8(28),
+        id: data.getUint8(28),
         type: pipeType,
       },
     },
@@ -177,16 +187,16 @@ var hardwareReportDecoder = function (data) {
 };
 
 var settingsReportDecoder = function (data) {
-  if (data.length != 38) {
+  if (data.byteLength != 38) {
     throw new Error(
-      `Wrong payload length (${data.length}), should be 38 bytes`
+      `Wrong payload length (${data.byteLength}), should be 38 bytes`
     );
   }
 
   return {
     type: "settingsReport",
     data: {
-      lorawanReportInterval: data.readUInt32LE(5),
+      lorawanReportInterval: data.getUint32(5, LSB),
     },
   };
 };
