@@ -26,7 +26,9 @@
           "waterTemperatureMax": 22,
           "waterTemperatureMin": 21.5
         }
-      }
+      },
+      "errors": [],
+      "warnings": []
     }
   },
   {
@@ -59,7 +61,9 @@
             }
           }
         }
-      }
+      },
+      "errors": [],
+      "warnings": []
     }
   },
   {
@@ -86,7 +90,9 @@
             "lorawanReportInterval": 600
           }
         }
-      }
+      },
+      "errors": [],
+      "warnings": []
     }
   }
 ]
