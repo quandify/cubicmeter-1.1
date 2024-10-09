@@ -13,15 +13,19 @@ describe("decode uplink", async () => {
       bytes: [],
     };
 
-    it("normal", async () => {
-      var result = decodeUplink(input);
+    it("format", async () => {
+      var output = decodeUplink(input);
 
-      assert.deepStrictEqual(result, {
-        fPort: 0,
-        length: 0,
-        hexBytes: "",
-        type: "ping",
-        payload: {},
+      assert.deepStrictEqual(output, {
+        data: {
+          fPort: 0,
+          length: 0,
+          hexBytes: "",
+          type: "ping",
+          decoded: {},
+        },
+        errors: [],
+        warnings: [],
       });
     });
   });
@@ -32,20 +36,20 @@ describe("decode uplink", async () => {
       bytes: [],
     };
 
-    describe("format", async () => {
-      it("normal", async () => {
-        input.bytes = hexToDecArray(
-          "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
-        );
+    it("format", async () => {
+      input.bytes = hexToDecArray(
+        "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
+      );
 
-        var result = decodeUplink(input);
+      var output = decodeUplink(input);
 
-        assert.deepStrictEqual(result, {
+      assert.deepStrictEqual(output, {
+        data: {
           fPort: 1,
           length: 28,
           hexBytes: "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455",
           type: "statusReport",
-          payload: {
+          decoded: {
             errorCode: 0,
             isSensing: true,
             totalVolume: 5342,
@@ -56,29 +60,9 @@ describe("decode uplink", async () => {
             waterTemperatureMax: 22,
             ambientTemperature: 22.5,
           },
-        });
-      });
-
-      it("to short", async () => {
-        input.bytes = hexToDecArray(
-          "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E65354"
-        );
-
-        assert.throws(
-          () => decodeUplink(input),
-          Error("Wrong payload length (27), should be 28 bytes")
-        );
-      });
-
-      it("to long", async () => {
-        input.bytes = hexToDecArray(
-          "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E653545555"
-        );
-
-        assert.throws(
-          () => decodeUplink(input),
-          Error("Wrong payload length (29), should be 28 bytes")
-        );
+        },
+        warnings: [],
+        errors: [],
       });
     });
 
@@ -88,9 +72,9 @@ describe("decode uplink", async () => {
           "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.leakState, 2);
+        assert.strictEqual(output.data.decoded.leakState, 2);
       });
 
       it("medium", async () => {
@@ -98,9 +82,9 @@ describe("decode uplink", async () => {
           "+k2/AQAA6RUPAAbMGQCT5Y4BmAEAAAPo7GZmVw=="
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.leakState, 3);
+        assert.strictEqual(output.data.decoded.leakState, 3);
       });
 
       it("large", async () => {
@@ -108,22 +92,47 @@ describe("decode uplink", async () => {
           "Ao4JAAAA6QEAAAAAAADUjAkAhhcAAATo6D8/Xg=="
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.leakState, 4);
+        assert.strictEqual(output.data.decoded.leakState, 4);
       });
     });
 
-    describe("error", async () => {
+    describe("errors", async () => {
+      it("payload to short", async () => {
+        input.bytes = hexToDecArray(
+          "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E65354"
+        );
+
+        var output = decodeUplink(input);
+        assert.deepStrictEqual(output.errors, [
+          "Wrong payload length (27), should be 28 bytes",
+        ]);
+      });
+
+      it("payload to long", async () => {
+        input.bytes = hexToDecArray(
+          "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E653545555"
+        );
+
+        var output = decodeUplink(input);
+        assert.deepStrictEqual(output.errors, [
+          "Wrong payload length (29), should be 28 bytes",
+        ]);
+      });
+    });
+
+    describe("warnings", async () => {
       it("no sensing", async () => {
         input.bytes = hexToDecArray(
           "3C1BE40100809520020010392F00000000000000000000E4E986C461"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.isSensing, false);
-        assert.strictEqual(result.payload.errorCode, 0);
+        assert.strictEqual(output.data.decoded.isSensing, false);
+        assert.strictEqual(output.data.decoded.errorCode, 0);
+        assert.deepStrictEqual(output.warnings, ["Not sensing water"]);
       });
 
       it("no sensing and reverse flow", async () => {
@@ -131,10 +140,14 @@ describe("decode uplink", async () => {
           "49FBDF018081DE1400000000000046EDDF0106FC8B0702E2E6535455"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.isSensing, false);
-        assert.strictEqual(result.payload.errorCode, 384);
+        assert.strictEqual(output.data.decoded.isSensing, false);
+        assert.strictEqual(output.data.decoded.errorCode, 384);
+        assert.deepStrictEqual(output.warnings, [
+          "Not sensing water",
+          "Reverse flow",
+        ]);
       });
 
       it("reverse flow", async () => {
@@ -142,10 +155,34 @@ describe("decode uplink", async () => {
           "49FBDF018001DE1400000000000046EDDF0106FC8B0702E2E6535455"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.isSensing, true);
-        assert.strictEqual(result.payload.errorCode, 384);
+        assert.strictEqual(output.data.decoded.isSensing, true);
+        assert.strictEqual(output.data.decoded.errorCode, 384);
+        assert.deepStrictEqual(output.warnings, ["Reverse flow"]);
+      });
+
+      it("low battery", async () => {
+        input.bytes = hexToDecArray(
+          "49FBDF010000DE1400000000000046EDDF0106FC8B07020102535455"
+        );
+
+        var output = decodeUplink(input);
+
+        assert.strictEqual(output.data.decoded.batteryActive, 1808);
+        assert.strictEqual(output.data.decoded.batteryRecovered, 1816);
+        assert.deepStrictEqual(output.warnings, ["Low battery"]);
+      });
+
+      it("contact support", async () => {
+        input.bytes = hexToDecArray(
+          "49FBDF01E703DE1400000000000046EDDF0106FC8B0702E2E6535455"
+        );
+
+        var output = decodeUplink(input);
+
+        assert.strictEqual(output.data.decoded.errorCode, 999);
+        assert.deepStrictEqual(output.warnings, ["Contact support, error 999"]);
       });
     });
   });
@@ -156,36 +193,34 @@ describe("decode uplink", async () => {
       bytes: [],
     };
 
-    it("invalid response status", async () => {
-      input.bytes = hexToDecArray(
-        "3209021300001602053F0000000000ED5A413DFC449C2B000001000000000001010000000000"
-      );
+    describe("errors", () => {
+      it("invalid response status", async () => {
+        input.bytes = hexToDecArray(
+          "3209021300001602053F0000000000ED5A413DFC449C2B000001000000000001010000000000"
+        );
 
-      assert.throws(
-        () => decodeUplink(input),
-        Error("Invalid response status: 9")
-      );
+        var output = decodeUplink(input);
+        assert.deepStrictEqual(output.errors, ["Invalid response status: 9"]);
+      });
+
+      it("invalid response type", async () => {
+        input.bytes = hexToDecArray(
+          "3200091300001602053F0000000000ED5A413DFC449C2B000001000000000001010000000000"
+        );
+
+        var output = decodeUplink(input);
+        assert.deepStrictEqual(output.errors, ["Invalid response type: 9"]);
+      });
     });
 
-    it("invalid response type", async () => {
-      input.bytes = hexToDecArray(
-        "3200091300001602053F0000000000ED5A413DFC449C2B000001000000000001010000000000"
-      );
-
-      assert.throws(
-        () => decodeUplink(input),
-        Error("Invalid response type: 9")
-      );
-    });
-
-    describe("none", async () => {
+    describe("no report", async () => {
       it("perform lorarwan reset", async () => {
         input.bytes = base64ToDecArray("ZgAA=");
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.type, undefined);
-        assert.strictEqual(result.payload.fPort, 102);
+        assert.strictEqual(output.data.decoded.type, "none");
+        assert.strictEqual(output.data.decoded.fPort, 102);
       });
     });
 
@@ -195,29 +230,29 @@ describe("decode uplink", async () => {
           "ZQABtl0BAACAAAAAAAAAAAAAAAAAAAAAAAC/u1RXWg=="
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.fPort, 101);
-        assert.strictEqual(result.payload.type, "statusReport");
+        assert.strictEqual(output.data.decoded.fPort, 101);
+        assert.strictEqual(output.data.decoded.type, "statusReport");
       });
     });
 
     describe("hardware report", async () => {
-      describe("format", async () => {
-        it("normal", () => {
-          input.bytes = base64ToDecArray(
-            "MgACEwAAFgIFPwAAAAAA7VpBPfxEnCsAAAEAAAAAAAEBAAAAAAA="
-          );
+      it("format", () => {
+        input.bytes = base64ToDecArray(
+          "MgACEwAAFgIFPwAAAAAA7VpBPfxEnCsAAAEAAAAAAAEBAAAAAAA="
+        );
 
-          var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-          assert.deepStrictEqual(result, {
+        assert.deepStrictEqual(output, {
+          data: {
             fPort: 6,
             length: 38,
             hexBytes:
               "3200021300001602053F0000000000ED5A413DFC449C2B000001000000000001010000000000",
             type: "response",
-            payload: {
+            decoded: {
               fPort: 50,
               status: "ok",
               type: "hardwareReport",
@@ -231,18 +266,22 @@ describe("decode uplink", async () => {
                 },
               },
             },
-          });
+          },
+          errors: [],
+          warnings: [],
         });
+      });
 
+      describe("errors", async () => {
         it("to short", async () => {
           input.bytes = hexToDecArray(
             "3200021300001602053F0000000000ED5A413DFC449C2B0000010000000000010100000000"
           );
 
-          assert.throws(
-            () => decodeUplink(input),
-            Error("Wrong payload length (34), should be 35 bytes")
-          );
+          var output = decodeUplink(input);
+          assert.deepStrictEqual(output.errors, [
+            "Wrong payload length (34), should be 35 bytes",
+          ]);
         });
 
         it("to long", async () => {
@@ -250,10 +289,10 @@ describe("decode uplink", async () => {
             "3200021300001602053F0000000000ED5A413DFC449C2B00000100000000000101000000000000"
           );
 
-          assert.throws(
-            () => decodeUplink(input),
-            Error("Wrong payload length (36), should be 35 bytes")
-          );
+          var output = decodeUplink(input);
+          assert.deepStrictEqual(output.errors, [
+            "Wrong payload length (36), should be 35 bytes",
+          ]);
         });
 
         it("invalid app state", async () => {
@@ -261,10 +300,8 @@ describe("decode uplink", async () => {
             "3200021300001602093F0000000000ED5A413DFC449C2B000001000000000001010000000000"
           );
 
-          assert.throws(
-            () => decodeUplink(input),
-            Error("Invalid app state (9)")
-          );
+          var output = decodeUplink(input);
+          assert.deepStrictEqual(output.errors, ["Invalid app state (9)"]);
         });
 
         it("invalid pipe index", async () => {
@@ -272,10 +309,8 @@ describe("decode uplink", async () => {
             "3200021300001602053F0000000000ED5A413DFC449C2B0000010000000000AA010000000000"
           );
 
-          assert.throws(
-            () => decodeUplink(input),
-            Error("Invalid pipe index (170)")
-          );
+          var output = decodeUplink(input);
+          assert.deepStrictEqual(output.errors, ["Invalid pipe index (170)"]);
         });
       });
 
@@ -284,10 +319,10 @@ describe("decode uplink", async () => {
           "0400021000001602053f0100000300e3ddcbb1bd758732000001000000000000010000000000"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.fPort, 4);
-        assert.strictEqual(result.payload.type, "hardwareReport");
+        assert.strictEqual(output.data.decoded.fPort, 4);
+        assert.strictEqual(output.data.decoded.type, "hardwareReport");
       });
 
       it("set app state", async () => {
@@ -295,25 +330,25 @@ describe("decode uplink", async () => {
           "0400021000001602053f0100000300e3ddcbb1bd758732000001000000000000010000000000"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.fPort, 4);
-        assert.strictEqual(result.payload.type, "hardwareReport");
+        assert.strictEqual(output.data.decoded.fPort, 4);
+        assert.strictEqual(output.data.decoded.type, "hardwareReport");
       });
     });
 
     describe("settings report", async () => {
-      describe("format", async () => {
-        it("normal", async () => {
-          input.bytes = hexToDecArray(
-            "13000401c0a80000580200000000001e00008d27000000000000000000000000000000000000000000"
-          );
+      it("format", async () => {
+        input.bytes = hexToDecArray(
+          "13000401c0a80000580200000000001e00008d27000000000000000000000000000000000000000000"
+        );
 
-          var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-          assert.deepStrictEqual(
-            {
-              payload: {
+        assert.deepStrictEqual(
+          {
+            data: {
+              decoded: {
                 data: {
                   lorawanReportInterval: 600,
                 },
@@ -327,19 +362,23 @@ describe("decode uplink", async () => {
               length: 41,
               type: "response",
             },
-            result
-          );
-        });
+            errors: [],
+            warnings: [],
+          },
+          output
+        );
+      });
 
+      describe("errors", () => {
         it("to short", async () => {
           input.bytes = hexToDecArray(
             "13000401c0a80000580200000000001e00008d270000000000000000000000000000000000000000"
           );
 
-          assert.throws(
-            () => decodeUplink(input),
-            Error("Wrong payload length (37), should be 38 bytes")
-          );
+          var output = decodeUplink(input);
+          assert.deepStrictEqual(output.errors, [
+            "Wrong payload length (37), should be 38 bytes",
+          ]);
         });
 
         it("to long", async () => {
@@ -347,10 +386,10 @@ describe("decode uplink", async () => {
             "13000401c0a80000580200000000001e00008d2700000000000000000000000000000000000000000000"
           );
 
-          assert.throws(
-            () => decodeUplink(input),
-            Error("Wrong payload length (39), should be 38 bytes")
-          );
+          var output = decodeUplink(input);
+          assert.deepStrictEqual(output.errors, [
+            "Wrong payload length (39), should be 38 bytes",
+          ]);
         });
       });
 
@@ -359,26 +398,30 @@ describe("decode uplink", async () => {
           "13000401c0a80000580200000000001e00008d27000000000000000000000000000000000000000000"
         );
 
-        var result = decodeUplink(input);
+        var output = decodeUplink(input);
 
-        assert.strictEqual(result.payload.fPort, 19);
-        assert.strictEqual(result.payload.type, "settingsReport");
+        assert.strictEqual(output.data.decoded.fPort, 19);
+        assert.strictEqual(output.data.decoded.type, "settingsReport");
       });
     });
   });
 });
 
 describe("normalize uplink", async () => {
-  var input = {};
+  var input = {
+    data: {},
+  };
 
   it("ping", async () => {
-    var result = normalizeUplink(input);
-    assert.deepStrictEqual(result, {});
+    input.data.type = "ping";
+    var output = normalizeUplink(input);
+    assert.deepStrictEqual(output, {});
   });
 
   it("response", async () => {
-    var result = normalizeUplink(input);
-    assert.deepStrictEqual(result, {});
+    input.data.type = "response";
+    var output = normalizeUplink(input);
+    assert.deepStrictEqual(output, {});
   });
 
   describe("status report", async () => {
@@ -386,27 +429,31 @@ describe("normalize uplink", async () => {
 
     beforeEach(() => {
       input = {
-        fPort: 1,
-        hexBytes: "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455",
-        length: 28,
-        payload: {
-          ambientTemperature: 22.5,
-          batteryActive: 3608,
-          batteryRecovered: 3640,
-          errorCode: 0,
-          isSensing: true,
-          leakState: 2,
-          totalVolume: 5342,
-          waterTemperatureMax: 22,
-          waterTemperatureMin: 21.5,
+        data: {
+          fPort: 1,
+          hexBytes: "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455",
+          length: 28,
+          decoded: {
+            ambientTemperature: 22.5,
+            batteryActive: 3608,
+            batteryRecovered: 3640,
+            errorCode: 0,
+            isSensing: true,
+            leakState: 2,
+            totalVolume: 5342,
+            waterTemperatureMax: 22,
+            waterTemperatureMin: 21.5,
+          },
+          type: "statusReport",
         },
-        type: "statusReport",
+        errors: [],
+        warnings: [],
       };
     });
 
-    it("normal", async () => {
-      var result = normalizeUplink(input);
-      assert.deepStrictEqual(result, {
+    it("format", async () => {
+      var output = normalizeUplink(input);
+      assert.deepStrictEqual(output, {
         data: {
           air: {
             temperature: 22.5,
@@ -425,27 +472,21 @@ describe("normalize uplink", async () => {
             },
           },
         },
+        errors: [],
         warnings: [],
       });
     });
 
-    it("low battery", async () => {
-      input.payload.batteryRecovered = 1100;
-      var result = normalizeUplink(input);
-      assert.strictEqual(result.data.battery, 1.1);
-      assert.deepStrictEqual(result.warnings, ["Low battery"]);
+    it("warnings", async () => {
+      input.warnings = ["warning"];
+      var output = normalizeUplink(input);
+      assert.deepStrictEqual(output.warnings, input.warnings);
     });
 
-    it("reverse flow", async () => {
-      input.payload.errorCode = 384;
-      var result = normalizeUplink(input);
-      assert.deepStrictEqual(result.warnings, ["Reverse flow"]);
-    });
-
-    it("contact support", async () => {
-      input.payload.errorCode = 999;
-      var result = normalizeUplink(input);
-      assert.deepStrictEqual(result.warnings, ["Contact support, error 999"]);
+    it("errors", async () => {
+      input.errors = ["error"];
+      var output = normalizeUplink(input);
+      assert.deepStrictEqual(output.errors, input.errors);
     });
   });
 });
@@ -453,12 +494,12 @@ describe("normalize uplink", async () => {
 describe("util", async () => {
   describe("hex to decimal array", async () => {
     it("normal", async () => {
-      var result = hexToDecArray(
+      var output = hexToDecArray(
         "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455"
       );
 
       assert.deepStrictEqual(
-        result,
+        output,
         [
           73, 251, 223, 1, 0, 0, 222, 20, 0, 0, 0, 0, 0, 0, 70, 237, 223, 1, 6,
           252, 139, 7, 2, 226, 230, 83, 84, 85,

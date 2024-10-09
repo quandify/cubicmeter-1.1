@@ -18,3 +18,5 @@ LoRaWAN MAC version: 1.0.2
 Regional parameter version: 1.0.2 RevB
 
 Supports join: OTAA
+
+[Payload Decoder API docs](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api)
