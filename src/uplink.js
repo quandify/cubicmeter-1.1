@@ -158,7 +158,7 @@ var responseDecoder = function (data) {
   const payload = new DataView(data.buffer, 3);
 
   var response = {
-    data: {},
+    decoded: {},
     warnings: [],
   };
 
@@ -179,7 +179,7 @@ var responseDecoder = function (data) {
       fPort: data.getUint8(0),
       status: status,
       type: type,
-      data: response.data,
+      data: response.decoded,
     },
     warnings: response.warnings,
   };
@@ -205,7 +205,7 @@ var hardwareReportDecoder = function (data) {
   const firmwareVersion = intToSemver(data.getUint32(0, LSB));
 
   return {
-    data: {
+    decoded: {
       firmwareVersion,
       hardwareVersion: data.getUint8(4),
       appState: appState,
@@ -226,7 +226,7 @@ var settingsReportDecoder = function (data) {
   }
 
   return {
-    data: {
+    decoded: {
       lorawanReportInterval: data.getUint32(5, LSB),
     },
     warnings: [],

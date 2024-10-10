@@ -214,17 +214,70 @@ describe("decode uplink", async () => {
     });
 
     describe("no report", async () => {
-      it("perform lorarwan reset", async () => {
+      it("format", async () => {
         input.bytes = base64ToDecArray("ZgAA=");
 
         var output = decodeUplink(input);
 
+        assert.deepStrictEqual(output, {
+          data: {
+            fPort: 6,
+            length: 3,
+            hexBytes: "660000",
+            type: "response",
+            decoded: { fPort: 102, status: "ok", type: "none", data: {} },
+          },
+          errors: [],
+          warnings: [],
+        });
+      });
+
+      it("perform lorarwan reset", async () => {
+        input.bytes = base64ToDecArray("ZgAA=");
+
+        var output = decodeUplink(input);
         assert.strictEqual(output.data.decoded.type, "none");
         assert.strictEqual(output.data.decoded.fPort, 102);
       });
     });
 
     describe("status report", async () => {
+      it("format", () => {
+        input.bytes = base64ToDecArray(
+          "NwABn0LXAQAAd4MAAPMAAAAAAAAAAAAAAADh5D4+Og=="
+        );
+
+        var output = decodeUplink(input);
+
+        assert.deepStrictEqual(output, {
+          data: {
+            fPort: 6,
+            length: 31,
+            hexBytes:
+              "3700019F42D701000077830000F3000000000000000000000000E1E43E3E3A",
+            type: "response",
+            decoded: {
+              fPort: 55,
+              status: "ok",
+              type: "statusReport",
+              data: {
+                errorCode: 0,
+                isSensing: true,
+                totalVolume: 33655,
+                leakState: 0,
+                batteryActive: 3600,
+                batteryRecovered: 3624,
+                waterTemperatureMin: 11,
+                waterTemperatureMax: 11,
+                ambientTemperature: 9,
+              },
+            },
+          },
+          errors: [],
+          warnings: [],
+        });
+      });
+
       it("perform volume reset", () => {
         input.bytes = base64ToDecArray(
           "ZQABtl0BAACAAAAAAAAAAAAAAAAAAAAAAAC/u1RXWg=="
