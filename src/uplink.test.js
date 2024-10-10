@@ -316,7 +316,7 @@ describe("decode uplink", async () => {
                 hardwareVersion: 2,
                 pipe: {
                   id: 1,
-                  type: "copper15",
+                  type: "Copper 15 mm",
                 },
               },
             },
