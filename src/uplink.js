@@ -59,7 +59,7 @@ var pipeTypes = {
  * @param input.bytes int[], The uplink payload byte array, where each byte is represented by an integer between 0 and 255.
  * @param input.recvTime Date, The uplink message timestamp recorded by the LoRaWAN network server as a JavaScript Date object.
  */
-export default function decodeUplink(input) {
+function decodeUplink(input) {
   const buffer = new ArrayBuffer(input.bytes.length);
   const data = new DataView(buffer);
   for (const index in input.bytes) {
@@ -254,7 +254,7 @@ var parseErrorCode = function (errorCode) {
   }
 };
 
-export var normalizeUplink = function (input) {
+var normalizeUplink = function (input) {
   if (input.data.type != "statusReport") {
     return {};
   }
@@ -286,7 +286,7 @@ export var normalizeUplink = function (input) {
 };
 
 // Convert a hex string to decimal array
-export var hexToDecArray = function (hexString) {
+var hexToDecArray = function (hexString) {
   const size = 2;
   const length = Math.ceil(hexString.length / size);
   const decimalList = new Array(length);
@@ -298,22 +298,31 @@ export var hexToDecArray = function (hexString) {
   return decimalList;
 };
 
-export var base64ToDecArray = function (base64String) {
+var base64ToDecArray = function (base64String) {
   const buffer = Buffer.from(base64String, "base64");
   const bufString = buffer.toString("hex");
 
   return hexToDecArray(bufString);
 };
 
-export var decArrayToStr = function (byteArray) {
+var decArrayToStr = function (byteArray) {
   return Array.from(byteArray, function (byte) {
     return ("0" + (byte & 0xff).toString(16)).slice(-2).toUpperCase();
   }).join("");
 };
 
-export var intToSemver = function (version) {
+var intToSemver = function (version) {
   const major = (version >> 24) & 0xff;
   const minor = (version >> 16) & 0xff;
   const patch = version & 0xffff;
   return `${major}.${minor}.${patch}`;
+};
+
+// Remove everything below if the error "Unexpected reserved word" appears
+export {
+  decodeUplink,
+  normalizeUplink,
+  base64ToDecArray,
+  decArrayToStr,
+  hexToDecArray,
 };

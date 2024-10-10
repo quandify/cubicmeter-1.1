@@ -1,6 +1,7 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import decodeUplink, {
+import {
+  decodeUplink,
   base64ToDecArray,
   hexToDecArray,
   normalizeUplink,
