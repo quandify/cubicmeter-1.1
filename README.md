@@ -1,30 +1,28 @@
 # CubicMeter 1.1
 
-The non-invasive CubicMeter 1.1 is a flow meter and leakage detector that communicates over LoRaWAN.
-The product comes in two versions, supporting either copper or plastic pipes.
+<img src="images/cubicmeter-1-1-plastic.png" alt="drawing" width="75"/><img src="images/cubicmeter-1-1-copper.png" alt="drawing" width="75"/>
 
-- CubicMeter 1.1 Plastic, CM1.1-P
-- CubicMeter 1.1 Copper, CM1.1-C
+The CubicMeter 1.1 is a non-invasive water flow meter with leakage detection capabilities that communicates over LoRaWAN. The product comes in two versions, supporting either plastic or copper pipes.
+
+- CubicMeter 1.1 Plastic (Black)
+- CubicMeter 1.1 Copper (White)
 
 https://quandify.com/cubicmeter
 
+## LoRaWAN specifications
+
+- LoRaWAN MAC version: 1.0.2
+- Regional parameter version: 1.0.2 RevB
+- Supports join: OTAA
+
 ## Decoder
+The device sends periodic status reports. The decoder defined in `src/uplink.js` parses the payload of such a report and converts it into human readible text.
 
-Use the `uplink.js` file in the `src` folder. It follows the format defined in [Payload Decoder API docs](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api).
+### Format
+The format of the decoder complies with the [LoRa Alliance Payload Decoder API](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api).
 
-If you want to copy the decoder to a javascript runner, remember to remove the `export` block in the bottom of the script.
-
-```
-export {
-  decodeUplink,
-  normalizeUplink,
-  base64ToDecArray,
-  decArrayToStr,
-  hexToDecArray,
-};
-```
-
-The decoder outputs the status report to the following format
+### Output
+Example of a decoded status report.
 
 ```
 {
@@ -50,7 +48,8 @@ The decoder outputs the status report to the following format
 }
 ```
 
-If you wish to prettify the output from the decoder, the `normalizeOutput` function can be used to transform the data.
+### Prettify
+The output can be prettified using the use the `normalizeOutput` function.
 
 ```
 {
@@ -77,47 +76,60 @@ If you wish to prettify the output from the decoder, the `normalizeOutput` funct
 }
 ```
 
+### JavaScript runner
+In order to use the decoder in a JavaScript runner, make sure to remove the `export` block in the bottom of the script.
+
+```
+export {
+  decodeUplink,
+  normalizeUplink,
+  base64ToDecArray,
+  decArrayToStr,
+  hexToDecArray,
+};
+```
+
 ## Uplinks
 
-The device send a status report with a period interval.
+### Status report
 
-| Fport | Decription          |
+| FPort | Decription          |
 | ----- | ------------------- |
 | 1     | Status report       |
 | 6     | Respone to downlink |
 
 ## Downlinks
+> [!IMPORTANT]
+> All downlink payloads must use least significant bit (LSB) hexadecimal format.
+---
 
-All downlink payloads must be in least significant bit (LSB) hexadecimal format.
+### Set status report interval
+Set the interval for the periodic status reports.
+> [!NOTE]
+> Changing the interval affects the battery life of the device.
 
-### Set lorawan status report interval
-
-Change the interval for the periodic status report.
-
-| Fport | Payload  | Value | Decription |
+| FPort | Payload  | Value | Decription |
 | ----- | -------- | ----- | ---------- |
 | 19    | 58020000 | 600   | 10 minutes |
-| 19    | 100E0000 | 3600  | 60 minutes |
+| 19    | 100E0000 | 3600  | 60 minutes (default) |
 | 19    | 60540000 | 21600 | 6 hours    |
 | 19    | C0A80000 | 43200 | 12 hours   |
 | 19    | 80510100 | 86400 | 24 hours   |
-
-> Default setting: 60 minutes
 
 | Limit | Descripion |
 | ----- | ---------- |
 | Upper | 30 days    |
 | Lower | 10 minutes |
 
-Note that lowering the interval affects the battery life of the product.
-
+---
 ### Set pipe index
 
-Change pipe type the device is mounted on. This commands has different allowed downlinks depending on device version.
+Change the type of pipe the device is mounted on.
+
+#### Supported pipes
 
 _CubicMeter 1.1 Copper_
-
-| Fport | Payload | Value | Type         | Description    |
+| FPort | Payload | Value | Type         | Description    |
 | ----- | ------- | ----- | ------------ | -------------- |
 | 4     | 01      | 1     | Copper 15 mm | Copper         |
 | 4     | 02      | 2     | Copper 18 mm | Copper         |
@@ -126,8 +138,7 @@ _CubicMeter 1.1 Copper_
 | 4     | 05      | 5     | Chrome 18 mm | Chromed copper |
 
 _CubicMeter 1.1 Plastic_
-
-| Fport | Payload | Value | Type      | Description           |
+| FPort | Payload | Value | Type      | Description           |
 | ----- | ------- | ----- | --------- | --------------------- |
 | 4     | 07      | 7     | PAL 16 mm | PE-RT/Aluminium/PE-RT |
 | 4     | 08      | 8     | PAL 20 mm | PE-RT/Aluminium/PE-RT |
@@ -137,38 +148,36 @@ _CubicMeter 1.1 Plastic_
 | 4     | 10      | 16    | PEX 25 mm | Plastic, PEX or PE-RT |
 | 4     | 11      | 17    | Distpipe  | LK Distance pipe 110  |
 
+---
+
 ### Set app state
 
-Force the device into a specific state
+Sets the device into a specific state/mode.
 
-| Fport | Payload | Value | Sate       | Description                                                 |
-| ----- | ------- | ----- | ---------- | ----------------------------------------------------------- |
-| 2     | 03      | 3     | ready      | Reset device to initial mode                                |
-| 2     | 04      | 4     | pipeSelect | Pipe selection mode                                         |
-| 2     | 05      | 5     | metering   | Force device to metering mode and skip the 1h settling time |
+| FPort | Payload | Value | Sate       | Description                               |
+| ----- | ------- | ----- | ---------- | ------------------------------------------|
+| 2     | 03      | 3     | ready      | Reset device to initial state             |
+| 2     | 04      | 4     | pipeSelect | Pipe selection mode                       |
+| 2     | 05      | 5     | metering   | Metering mode (without 1h settling time)  |
+
+---
 
 ### Perform volume reset
 
-Reset the total volume of the device. Can be used
+Reset the total volume of the device.
 
-| Fport | Payload | Value | Description            |
-| ----- | ------- | ----- | ---------------------- |
-| 101   | 0       | 0     | Reset the total volume |
+| FPort | Payload | Value |
+| ----- | ------- | ----- |
+| 101   | 0       | 0     |
+
+---
 
 ### Perform lorawan reset
 
-To do a LoRaWAN reset or switch network
+Reset LoRaWAN connection (e.g. for switch network)
 
-| Fport | Payload | Value | Description              |
-| ----- | ------- | ----- | ------------------------ |
-| 102   | 0       | 0     | Reset lorawan connection |
+| Fport | Payload | Value |
+| ----- | ------- | ----- | 
+| 102   | 0       | 0     |
 
-The device will also automatically reset the network after 54 uplinks without any answer. So it will take by default 54 hours to reset if the network is lost.
-
-## LoRaWAN specifications
-
-LoRaWAN MAC version: 1.0.2
-
-Regional parameter version: 1.0.2 RevB
-
-Supports join: OTAA
+---
