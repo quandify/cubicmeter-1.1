@@ -16,7 +16,7 @@ https://quandify.com/cubicmeter
 - Supports join: OTAA
 
 ## Decoder
-The device sends periodic status reports. The decoder defined in `src/uplink.js` parses the payload of such a report and converts it into human readible text.
+The decoder defined in `src/uplink.js` parses the payload of an uplink and converts it into human readible text.
 
 ### Format
 The format of the decoder complies with the [LoRa Alliance Payload Decoder API](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api).
@@ -91,12 +91,10 @@ export {
 
 ## Uplinks
 
-### Status report
-
 | FPort | Decription          |
 | ----- | ------------------- |
 | 1     | Status report       |
-| 6     | Respone to downlink |
+| 6     | Downlink response   |
 
 ## Downlinks
 > [!IMPORTANT]
