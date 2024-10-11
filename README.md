@@ -1,14 +1,11 @@
 # CubicMeter 1.1
 
-![PACKSHOT CubicMeter White ISO ver1 0](https://github.com/user-attachments/assets/1830cac6-92f5-4906-88db-6e7eee7ec28e)
+<img src="images/cubicmeter-1-1-plastic.png" alt="drawing" width="75"/><img src="images/cubicmeter-1-1-copper.png" alt="drawing" width="75"/>
 
-<img src="drawing.jpg" alt="drawing" width="200"/>
+The CubicMeter 1.1 is a non-invasive water flow meter with leakage detection capabilities that communicates over LoRaWAN. The product comes in two versions, supporting either plastic or copper pipes.
 
-The CubicMeter 1.1 is a non-invasive water flow meter with leakage detection capabilities that communicates over LoRaWAN.
-The product comes in two versions, supporting either copper or plastic pipes.
-
-- CubicMeter 1.1 Copper, CM1.1-C
-- CubicMeter 1.1 Plastic, CM1.1-P
+- CubicMeter 1.1 Plastic (Black)
+- CubicMeter 1.1 Copper (White)
 
 https://quandify.com/cubicmeter
 
@@ -19,15 +16,13 @@ https://quandify.com/cubicmeter
 - Supports join: OTAA
 
 ## Decoder
-
-### Source
-Use the `uplink.js` file in the `src` folder.
+The device sends periodic status reports. The decoder defined in `src/uplink.js` parses the payload of such a report and converts it into human readible text.
 
 ### Format
-The decoder follows the format defined by the LoRa Alliance ([Payload Decoder API docs](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api)).
+The format of the decoder complies with the [LoRa Alliance Payload Decoder API](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api).
 
 ### Output
-The decoder outputs the status report to the following format
+Example of a decoded status report.
 
 ```
 {
@@ -54,7 +49,7 @@ The decoder outputs the status report to the following format
 ```
 
 ### Prettify
-If you wish to prettify the output from the decoder, the `normalizeOutput` function can be used to transform the data.
+The output can be prettified using the use the `normalizeOutput` function.
 
 ```
 {
@@ -81,8 +76,8 @@ If you wish to prettify the output from the decoder, the `normalizeOutput` funct
 }
 ```
 
-> [!NOTE]
-> If you want to copy the decoder to a javascript runner, remember to remove the `export` block in the bottom of the script.
+### JavaScript runner
+In order to use the decoder in a JavaScript runner, make sure to remove the `export` block in the bottom of the script.
 
 ```
 export {
@@ -97,7 +92,6 @@ export {
 ## Uplinks
 
 ### Status report
-A device will send status reports with periodic intervals.
 
 | FPort | Decription          |
 | ----- | ------------------- |
@@ -105,13 +99,13 @@ A device will send status reports with periodic intervals.
 | 6     | Respone to downlink |
 
 ## Downlinks
-
-### Format
-All downlink payloads must use least significant bit (LSB) hexadecimal format.
+> [!IMPORTANT]
+> All downlink payloads must use least significant bit (LSB) hexadecimal format.
+---
 
 ### Set status report interval
-Set the interval for the periodic status report.
-> [!IMPORTANT]
+Set the interval for the periodic status reports.
+> [!NOTE]
 > Changing the interval affects the battery life of the device.
 
 | FPort | Payload  | Value | Decription |
@@ -134,7 +128,7 @@ Change the type of pipe the device is mounted on.
 
 #### Supported pipes
 
-_CubicMeter 1.1 Copper, CM1.1-C_
+_CubicMeter 1.1 Copper_
 | FPort | Payload | Value | Type         | Description    |
 | ----- | ------- | ----- | ------------ | -------------- |
 | 4     | 01      | 1     | Copper 15 mm | Copper         |
@@ -143,7 +137,7 @@ _CubicMeter 1.1 Copper, CM1.1-C_
 | 4     | 04      | 4     | Chrome 15 mm | Chromed copper |
 | 4     | 05      | 5     | Chrome 18 mm | Chromed copper |
 
-_CubicMeter 1.1 Plastic, CM1.1-P_
+_CubicMeter 1.1 Plastic_
 | FPort | Payload | Value | Type      | Description           |
 | ----- | ------- | ----- | --------- | --------------------- |
 | 4     | 07      | 7     | PAL 16 mm | PE-RT/Aluminium/PE-RT |
