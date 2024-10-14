@@ -1,4 +1,5 @@
 {
+  "codecId": "badb",
   "sourceUrl": "https://github.com/quandify/cubicmeter-1.1",
   "version": "1.0.0",
   "main": "uplink.js",
