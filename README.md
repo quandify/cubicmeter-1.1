@@ -179,3 +179,9 @@ Reset LoRaWAN connection (e.g. for switch network)
 | 102   | 0       | 0     |
 
 ---
+
+## Imlpementations
+
+[The Things Network](https://github.com/TheThingsNetwork/lorawan-devices/tree/master/vendor/quandify)
+
+[Akenza.io](https://github.com/akenza-io/device-type-library/tree/main/types/quandify)
