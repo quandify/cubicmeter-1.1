@@ -110,13 +110,10 @@ Set the interval for the periodic status reports.
 | ----- | -------- | ----- | ---------- |
 | 19    | 58020000 | 600   | 10 minutes |
 | 19    | 100E0000 | 3600  | 60 minutes (default) |
-| 19    | 60540000 | 21600 | 6 hours    |
-| 19    | C0A80000 | 43200 | 12 hours   |
-| 19    | 80510100 | 86400 | 24 hours   |
 
 | Limit | Descripion |
 | ----- | ---------- |
-| Upper | 30 days    |
+| Upper | 60 minutes |
 | Lower | 10 minutes |
 
 ---
