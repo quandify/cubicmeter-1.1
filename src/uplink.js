@@ -317,12 +317,3 @@ var intToSemver = function (version) {
   const patch = version & 0xffff;
   return `${major}.${minor}.${patch}`;
 };
-
-// Remove everything below if the error "Unexpected reserved word" appears
-export {
-  decodeUplink,
-  normalizeUplink,
-  base64ToDecArray,
-  decArrayToStr,
-  hexToDecArray,
-};

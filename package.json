@@ -5,9 +5,11 @@
   "repository": "git@github.com:quandify/cubicmeter-1.1.git",
   "author": "Peter Eriksson <peter.eriksson@quandify.com>",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "test": "node --test",
     "test:watch": "node --test --watch"
+  },
+  "devDependencies": {
+    "rewire": "^7.0.0"
   }
 }

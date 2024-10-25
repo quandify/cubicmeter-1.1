@@ -76,19 +76,6 @@ The output can be prettified using the use the `normalizeOutput` function.
 }
 ```
 
-### JavaScript runner
-In order to use the decoder in a JavaScript runner, make sure to remove the `export` block in the bottom of the script.
-
-```
-export {
-  decodeUplink,
-  normalizeUplink,
-  base64ToDecArray,
-  decArrayToStr,
-  hexToDecArray,
-};
-```
-
 ## Uplinks
 
 | FPort | Decription          |
