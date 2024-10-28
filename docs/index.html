@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CubicMeter 1.1 Decoder</title>
+
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+    <link href="./dist/output.css" rel="stylesheet" />
+    <script src="./dist/uplink.js"></script>
+    <script lang="js">
+      function decode(event) {
+        event.preventDefault()
+        const formData = new FormData(event.currentTarget)
+        const formObject = Object.fromEntries(formData.entries())
+
+        const input = {
+          fPort: parseInt(formObject.fPort),
+          bytes: hexToDecArray(formObject.payload)
+        }
+
+        const result = decodeUplink(input);
+        document.getElementById("decode-output").innerText = JSON.stringify(result, null, 2);
+      }
+    </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body data-sveltekit-preload-data="hover" class="bg-gray-200">
+    <div class="md:container md:mx-auto bg-white h-screen p-8">
+      <div class="flex items-center">
+        <div>
+          <img src="images/logo.svg" alt="logo" class="h-8" />
+        </div>
+
+        <h1 class="text-xl ml-2">CubicMeter 1.1 Decoder</h1>
+      </div>
+      <h2 class="mt-8 text-4xl">Uplink</h2>
+      <div>
+        <form onsubmit="decode(event)">
+          <div class="w-full md:flex md:gap-x-4 md:items-end mt-4">
+            <div class="w-full md:w-8/12">
+              <label for="payload" class="">Payload</label>
+              <input
+                name="payload"
+                type="text"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <div class="w-full md:w-2/12">
+              <label for="fPort">Fport</label>
+              <input
+                name="fPort"
+                type="text"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            <div class="w-full md:w-2/12">
+              <input
+                class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                type="submit"
+                value="Decode"
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="mt-4">
+        <label for="decode-output">Output</label>
+        <pre
+          id="decode-output"
+          name="decode-output"
+          class="flex min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        ></pre>
+      </div>
+    </div>
+  </body>
+</html>

@@ -52,12 +52,15 @@ var pipeTypes = {
 };
 
 /**
+ * @typedef {Object} InputType
+ * @property {number} fPort - The port number.
+ * @property {number[]} bytes - An array of byte values.
+ */
+
+/**
  * 4.1 Uplink Decode
  * The 'decodeUplink' function takes a message object and returns a parsed data object.
- * @param input Message object
- * @param input.fPort int,  The uplink message LoRaWAN fPort.
- * @param input.bytes int[], The uplink payload byte array, where each byte is represented by an integer between 0 and 255.
- * @param input.recvTime Date, The uplink message timestamp recorded by the LoRaWAN network server as a JavaScript Date object.
+ * @param {InputType} input - The input object containing fPort and bytes.
  */
 function decodeUplink(input) {
   const buffer = new ArrayBuffer(input.bytes.length);
