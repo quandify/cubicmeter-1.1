@@ -5,7 +5,6 @@ const rewire = require("rewire");
 
 const uplink = rewire("./uplink");
 const decodeUplink = uplink.__get__("decodeUplink");
-const hexToDecArray = uplink.__get__("hexToDecArray");
 const normalizeUplink = uplink.__get__("normalizeUplink");
 
 var base64ToDecArray = function (base64String) {
@@ -13,6 +12,19 @@ var base64ToDecArray = function (base64String) {
   const bufString = buffer.toString("hex");
 
   return hexToDecArray(bufString);
+};
+
+// Convert a hex string to decimal array
+var hexToDecArray = function (hexString) {
+  const size = 2;
+  const length = Math.ceil(hexString.length / size);
+  const decimalList = new Array(length);
+
+  for (let i = 0, o = 0; i < length; ++i, o += size) {
+    decimalList[i] = parseInt(hexString.substr(o, size), 16);
+  }
+
+  return decimalList;
 };
 
 describe("decode uplink", async () => {
