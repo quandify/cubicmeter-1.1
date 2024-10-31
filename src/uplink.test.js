@@ -5,9 +5,15 @@ const rewire = require("rewire");
 
 const uplink = rewire("./uplink");
 const decodeUplink = uplink.__get__("decodeUplink");
-const base64ToDecArray = uplink.__get__("base64ToDecArray");
 const hexToDecArray = uplink.__get__("hexToDecArray");
 const normalizeUplink = uplink.__get__("normalizeUplink");
+
+var base64ToDecArray = function (base64String) {
+  const buffer = Buffer.from(base64String, "base64");
+  const bufString = buffer.toString("hex");
+
+  return hexToDecArray(bufString);
+};
 
 describe("decode uplink", async () => {
   describe("ping", async () => {

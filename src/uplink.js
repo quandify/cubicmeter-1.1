@@ -298,13 +298,6 @@ var hexToDecArray = function (hexString) {
   return decimalList;
 };
 
-var base64ToDecArray = function (base64String) {
-  const buffer = Buffer.from(base64String, "base64");
-  const bufString = buffer.toString("hex");
-
-  return hexToDecArray(bufString);
-};
-
 var decArrayToStr = function (byteArray) {
   return Array.from(byteArray, function (byte) {
     return ("0" + (byte & 0xff).toString(16)).slice(-2).toUpperCase();
