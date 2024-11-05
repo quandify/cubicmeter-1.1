@@ -52,20 +52,17 @@ var pipeTypes = {
 };
 
 /**
+ * @typedef {Object} InputType
+ * @property {number} fPort - The port number.
+ * @property {number[]} bytes - An array of byte values.
+ */
+
+/**
  * 4.1 Uplink Decode
  * The 'decodeUplink' function takes a message object and returns a parsed data object.
- * @param input Message object
- * @param input.fPort int,  The uplink message LoRaWAN fPort.
- * @param input.bytes int[], The uplink payload byte array, where each byte is represented by an integer between 0 and 255.
- * @param input.recvTime Date, The uplink message timestamp recorded by the LoRaWAN network server as a JavaScript Date object.
+ * @param {InputType} input - The input object containing fPort and bytes.
  */
 function decodeUplink(input) {
-  const buffer = new ArrayBuffer(input.bytes.length);
-  const data = new DataView(buffer);
-  for (const index in input.bytes) {
-    data.setUint8(index, input.bytes[index]);
-  }
-
   var decoded = {};
   var errors = [];
   var warnings = [];
@@ -73,10 +70,14 @@ function decodeUplink(input) {
   try {
     switch (input.fPort) {
       case 1: // Status report
-        ({ decoded, warnings } = statusReportDecoder(data));
+        var statusReport = statusReportDecoder(input.bytes);
+        decoded = statusReport.decoded;
+        warnings = statusReport.warnings;
         break;
       case 6: // Response
-        ({ decoded, warnings } = responseDecoder(data));
+        var responseReport = responseDecoder(input.bytes);
+        decoded = responseReport.decoded;
+        warnings = responseReport.warnings;
         break;
     }
   } catch (err) {
@@ -90,39 +91,37 @@ function decodeUplink(input) {
       length: input.bytes.length,
       hexBytes: decArrayToStr(input.bytes),
       type: uplinkTypes[input.fPort],
-      decoded,
+      decoded: decoded,
     },
-    errors,
-    warnings,
+    errors: errors,
+    warnings: warnings,
   };
 }
 
-const LSB = true;
-
 var statusReportDecoder = function (data) {
-  if (data.byteLength != 28) {
+  if (data.length != 28) {
     throw new Error(
-      `Wrong payload length (${data.byteLength}), should be 28 bytes`
+      "Wrong payload length (" + data.length + "), should be 28 bytes"
     );
   }
 
-  let warnings = [];
-  const error = data.getUint16(4, LSB);
+  var warnings = [];
+  var error = readUInt16LE(data, 4);
 
   // The is sensing value is a bit flag of the error field
-  const isSensing = !(error & 0x8000);
-  const errorCode = error & 0x7fff;
+  var isSensing = !(error & 0x8000);
+  var errorCode = error & 0x7fff;
 
-  const decoded = {
+  var decoded = {
     errorCode: errorCode, // current error code
     isSensing: isSensing, // is the ultrasonic sensor sensing water
-    totalVolume: data.getUint32(6, LSB), // All-time aggregated water usage in litres
-    leakState: data.getUint8(22), // current water leakage state
-    batteryActive: decodeBatteryLevel(data.getUint8(23)), // battery mV active
-    batteryRecovered: decodeBatteryLevel(data.getUint8(24)), // battery mV recovered
-    waterTemperatureMin: decodeTemperature(data.getUint8(25)), // min water temperature since last statusReport
-    waterTemperatureMax: decodeTemperature(data.getUint8(26)), // max water temperature since last statusReport
-    ambientTemperature: decodeTemperature(data.getUint8(27)), // current ambient temperature
+    totalVolume: readUInt32LE(data, 6), // All-time aggregated water usage in litres
+    leakState: data[22], // current water leakage state
+    batteryActive: decodeBatteryLevel(data[23]), // battery mV active
+    batteryRecovered: decodeBatteryLevel(data[24]), // battery mV recovered
+    waterTemperatureMin: decodeTemperature(data[25]), // min water temperature since last statusReport
+    waterTemperatureMax: decodeTemperature(data[26]), // max water temperature since last statusReport
+    ambientTemperature: decodeTemperature(data[27]), // current ambient temperature
   };
 
   // Warnings
@@ -139,23 +138,23 @@ var statusReportDecoder = function (data) {
   }
 
   return {
-    decoded,
-    warnings,
+    decoded: decoded,
+    warnings: warnings,
   };
 };
 
 var responseDecoder = function (data) {
-  const status = responseStatuses[data.getUint8(1)];
+  var status = responseStatuses[data[1]];
   if (status === undefined) {
-    throw new Error(`Invalid response status: ${data.getUint8(1)}`);
+    throw new Error("Invalid response status: " + data[1]);
   }
 
-  const type = responseTypes[data.getUint8(2)];
+  var type = responseTypes[data[2]];
   if (type === undefined) {
-    throw new Error(`Invalid response type: ${data.getUint8(2)}`);
+    throw new Error("Invalid response type: " + data[2]);
   }
 
-  const payload = new DataView(data.buffer, 3);
+  var payload = data.slice(3);
 
   var response = {
     decoded: {},
@@ -176,7 +175,7 @@ var responseDecoder = function (data) {
 
   return {
     decoded: {
-      fPort: data.getUint8(0),
+      fPort: data[0],
       status: status,
       type: type,
       data: response.decoded,
@@ -186,31 +185,31 @@ var responseDecoder = function (data) {
 };
 
 var hardwareReportDecoder = function (data) {
-  if (data.byteLength != 35) {
+  if (data.length != 35) {
     throw new Error(
-      `Wrong payload length (${data.byteLength}), should be 35 bytes`
+      "Wrong payload length (" + data.length + "), should be 35 bytes"
     );
   }
 
-  const appState = appStates[data.getUint8(5)];
+  var appState = appStates[data[5]];
   if (appState === undefined) {
-    throw new Error(`Invalid app state (${data.getUint8(5)})`);
+    throw new Error("Invalid app state (" + data[5] + ")");
   }
 
-  const pipeType = pipeTypes[data.getUint8(28)];
+  var pipeType = pipeTypes[data[28]];
   if (pipeType === undefined) {
-    throw new Error(`Invalid pipe index (${data.getUint8(28)})`);
+    throw new Error("Invalid pipe index (" + data[28] + ")");
   }
 
-  const firmwareVersion = intToSemver(data.getUint32(0, LSB));
+  var firmwareVersion = intToSemver(readUInt32LE(data, 0));
 
   return {
     decoded: {
-      firmwareVersion,
-      hardwareVersion: data.getUint8(4),
+      firmwareVersion: firmwareVersion,
+      hardwareVersion: data[4],
       appState: appState,
       pipe: {
-        id: data.getUint8(28),
+        id: data[28],
         type: pipeType,
       },
     },
@@ -219,15 +218,15 @@ var hardwareReportDecoder = function (data) {
 };
 
 var settingsReportDecoder = function (data) {
-  if (data.byteLength != 38) {
+  if (data.length != 38) {
     throw new Error(
-      `Wrong payload length (${data.byteLength}), should be 38 bytes`
+      "Wrong payload length (" + data.length + "), should be 38 bytes"
     );
   }
 
   return {
     decoded: {
-      lorawanReportInterval: data.getUint32(5, LSB),
+      lorawanReportInterval: readUInt32LE(data, 5),
     },
     warnings: [],
   };
@@ -250,7 +249,7 @@ var parseErrorCode = function (errorCode) {
     case 384:
       return "Reverse flow";
     default:
-      return `Contact support, error ${errorCode}`;
+      return "Contact support, error " + errorCode;
   }
 };
 
@@ -286,14 +285,64 @@ var normalizeUplink = function (input) {
 };
 
 var decArrayToStr = function (byteArray) {
-  return Array.from(byteArray, function (byte) {
-    return ("0" + (byte & 0xff).toString(16)).slice(-2).toUpperCase();
-  }).join("");
+  var hexStr = "";
+  for (var i = 0; i < byteArray.length; i++) {
+    var hex = ("0" + (byteArray[i] & 0xff).toString(16))
+      .slice(-2)
+      .toUpperCase();
+    hexStr += hex;
+  }
+  return hexStr;
 };
 
 var intToSemver = function (version) {
-  const major = (version >> 24) & 0xff;
-  const minor = (version >> 16) & 0xff;
-  const patch = version & 0xffff;
-  return `${major}.${minor}.${patch}`;
+  var major = (version >> 24) & 0xff;
+  var minor = (version >> 16) & 0xff;
+  var patch = version & 0xffff;
+  return major + "." + minor + "." + patch;
+};
+
+function readUInt16LE(bytes, pos) {
+  var value = bytes[pos] + (bytes[pos + 1] << 8);
+  return value & 0xffff;
+}
+
+function readUInt32LE(bytes, pos) {
+  var value =
+    bytes[pos] +
+    (bytes[pos + 1] << 8) +
+    (bytes[pos + 2] << 16) +
+    (bytes[pos + 3] << 24);
+  return value & 0xffffffff;
+}
+
+var normalizeUplink = function (input) {
+  if (input.data.type != "statusReport") {
+    return {};
+  }
+
+  return {
+    data: {
+      air: {
+        temperature: input.data.decoded.ambientTemperature, // °C
+      },
+      water: {
+        temperature: {
+          min: input.data.decoded.waterTemperatureMin, // °C
+          max: input.data.decoded.waterTemperatureMax, // °C
+        },
+        leak: leakStates[input.data.decoded.leak_state]
+          ? leakStates[input.data.decoded.leak_state]
+          : "", // String
+      },
+      metering: {
+        water: {
+          total: input.data.decoded.totalVolume, // L
+        },
+      },
+      battery: input.data.decoded.batteryRecovered / 1000, // V
+    },
+    warnings: input.warnings,
+    errors: input.errors,
+  };
 };
