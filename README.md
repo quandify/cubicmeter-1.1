@@ -134,13 +134,13 @@ _CubicMeter 1.1 Plastic_
 
 ### Set app state
 
-Sets the device into a specific state/mode.
+Set the device into a specific state.
 
-| FPort | Payload | Value | Sate       | Description                               |
+| FPort | Payload | Value | Sate | Description                               |
 | ----- | ------- | ----- | ---------- | ------------------------------------------|
-| 2     | 03      | 3     | ready      | Reset device to initial state             |
-| 2     | 04      | 4     | pipeSelect | Pipe selection mode                       |
-| 2     | 05      | 5     | metering   | Metering mode (without 1h settling time)  |
+| 2     | 03      | 3     | HELLO      | Reset device to initial state             |
+| 2     | 04      | 4     | Set pipe | Pipe selection state                       |
+| 2     | 05      | 5     | Metering   | Metering state (without 1h settling time)  |
 
 ---
 
