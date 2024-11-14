@@ -7,9 +7,16 @@
   "license": "MIT",
   "scripts": {
     "test": "node --test",
-    "test:watch": "node --test --watch"
+    "test:watch": "node --test --watch",
+    "dev": "vite",
+    "build": "vite build"
   },
   "devDependencies": {
-    "rewire": "^7.0.0"
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "rewire": "^7.0.0",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.10",
+    "vite-plugin-static-copy": "^2.1.0"
   }
 }

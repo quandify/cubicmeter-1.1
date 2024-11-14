@@ -1,7 +1,6 @@
 // Cubicmeter 1.1 uplink decoder
 
 var appStates = {
-  3: "ready",
   4: "pipeSelection",
   5: "metering",
 };
