@@ -151,7 +151,6 @@ Sets the device into a specific state/mode.
 
 | FPort | Payload | Value | Sate       | Description                              |
 | ----- | ------- | ----- | ---------- | ---------------------------------------- |
-| 2     | 03      | 3     | ready      | Reset device to initial state            |
 | 2     | 04      | 4     | pipeSelect | Pipe selection mode                      |
 | 2     | 05      | 5     | metering   | Metering mode (without 1h settling time) |
 
