@@ -23,6 +23,8 @@ https://quandify.com/cubicmeter
 
 The decoder defined in `src/uplink.js` parses the payload of an uplink and converts it into human readible text.
 
+[Online decoder](https://quandify.github.io/cubicmeter-1.1/)
+
 ### Format
 
 The format of the decoder complies with the [LoRa Alliance Payload Decoder API](https://resources.lora-alliance.org/technical-specifications/ts013-1-0-0-payload-codec-api).
