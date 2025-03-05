@@ -100,6 +100,16 @@ The output can be prettified using the use the `normalizeOutput` function.
 
 ---
 
+### Get hardware report
+
+Ask the device for hardware related information. The response contains firmware and hardware version, app state and pipe type.
+
+| Fport | Payload |
+| ----- | ------- |
+| 50    | 0       |
+
+---
+
 ### Set status report interval
 
 Set the interval for the periodic status reports.
