@@ -120,6 +120,7 @@ Set the interval for the periodic status reports.
 | FPort | Payload  | Value | Decription           |
 | ----- | -------- | ----- | -------------------- |
 | 19    | 58020000 | 600   | 10 minutes           |
+| 19    | 08070000 | 1800  | 30 minutes           |
 | 19    | 100E0000 | 3600  | 60 minutes (default) |
 
 | Limit | Descripion |
