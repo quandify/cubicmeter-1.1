@@ -228,7 +228,7 @@ Enable or disable LoRaWAN uplink acknowledge
 
 --
 
-## Set Heat threshold
+## Set heat threshold
 
 Change the heat threshold, from which the energy content of the water is accumulated.
 
@@ -237,6 +237,17 @@ Change the heat threshold, from which the energy content of the water is accumul
 | FPort | Payload | Value | Description    |
 | ----- | ------- | ----- | -------------- |
 | 22    | 001E    | 7680  | 30°C (default) |
+
+--
+
+## Set total volume and heat
+
+Set the total volume and heat to a specific value. Useful when replacing a meter and the total volume or heat should be kept.
+
+| FPort | Bytes | Payload | Value | Description            |
+| ----- | ----- | ------- | ----- | ---------------------- |
+| 31    | 0-3   | 0000    | 0     | Total volume in Liters |
+|       | 4-7   | 0000    | 0     | Total heat in kCal     |
 
 --
 
