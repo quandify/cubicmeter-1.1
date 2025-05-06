@@ -97,19 +97,19 @@ The output can be prettified using the use the `normalizeOutput` function.
 
 fport: 2
 
-| Bytes | Label                   | Type     | Unit                    | Range        | Description                                                                                                         |
-| ----- | ----------------------- | -------- | ----------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| 0-3   | uptime                  | uint32   | Seconds                 | uint32 range | Time since last reset                                                                                               |
-| 4-5   | error code              | uint16   | -                       |              | Current error code or 0 = No error. <br>The MSB is reserved for ERROR_MSG_NO_SIGNAL. <br>1 = error <br>0 = no error |
-| 6-9   | total volume            | uint32   | Liters                  | uint32 range | All-time total volume since installation                                                                            |
-| 10-13 | total heat              | uint32_t | kCal                    | uint32 range | All-time total heat above the heat threshold (default 30°C) since installation.                                     |
-| 14-20 | not supported           |          |                         |              | Data used for small leak detection in use with Quandify backend only                                                |
-| 21    | leak state              | uint8    | -                       | [0 - 4]      | Leak state                                                                                                          |
-| 22    | battery level active    | uint8    | Compact battery, mV     | [1800, 3600] | Battery level active, measured after wireless transmission                                                          |
-| 23    | battery level recovered | uint8    | Compact battery, mV     | [1800, 3600] | Battery level recovered, measured during normal operation                                                           |
-| 24    | water temperature min   | uint8    | Compact temperature, °C | [-20, 105]   | Min water temperature since last message                                                                            |
-| 25    | water temperature max   | uint8    | Compact temperature, °C | [-20, 105]   | Max water temperature since last message                                                                            |
-| 26    | ambient temperature     | uint8    | Compact temperature, °C | [-20, 105]   | Latest ambient temperature value                                                                                    |
+| Bytes | Label                   | Type   | Unit                    | Range        | Description                                                                                                         |
+| ----- | ----------------------- | ------ | ----------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| 0-3   | uptime                  | uint32 | Seconds                 | uint32 range | Time since last reset                                                                                               |
+| 4-5   | error code              | uint16 | -                       |              | Current error code or 0 = No error. <br>The MSB is reserved for ERROR_MSG_NO_SIGNAL. <br>1 = error <br>0 = no error |
+| 6-9   | total volume            | uint32 | Liters                  | uint32 range | All-time total volume since installation                                                                            |
+| 10-13 | total heat              | uint32 | kCal                    | uint32 range | All-time total heat above the heat threshold (default 30°C) since installation.                                     |
+| 14-20 | not supported           |        |                         |              | Data used for small leak detection in use with Quandify backend only                                                |
+| 21    | leak state              | uint8  | -                       | [0 - 4]      | Leak state                                                                                                          |
+| 22    | battery level active    | uint8  | Compact battery, mV     | [1800, 3600] | Battery level active, measured after wireless transmission                                                          |
+| 23    | battery level recovered | uint8  | Compact battery, mV     | [1800, 3600] | Battery level recovered, measured during normal operation                                                           |
+| 24    | water temperature min   | uint8  | Compact temperature, °C | [-20, 105]   | Min water temperature since last message                                                                            |
+| 25    | water temperature max   | uint8  | Compact temperature, °C | [-20, 105]   | Max water temperature since last message                                                                            |
+| 26    | ambient temperature     | uint8  | Compact temperature, °C | [-20, 105]   | Latest ambient temperature value                                                                                    |
 
 ### Leak state
 
@@ -214,6 +214,17 @@ Sets the device into a specific state/mode.
 | ----- | ------- | ----- | ---------- | ---------------------------------------- |
 | 2     | 04      | 4     | pipeSelect | Pipe selection mode                      |
 | 2     | 05      | 5     | metering   | Metering mode (without 1h settling time) |
+
+---
+
+## Set flow direction
+
+Sets the expected flow direction.
+
+| FPort | Payload | Value | Description                                                    |
+| ----- | ------- | ----- | -------------------------------------------------------------- |
+| 13    | 01      | 1     | Forward (default)                                              |
+| 13    | FF      | -1    | Reversed, to be used with meters that were installed backwards |
 
 ---
 
