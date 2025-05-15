@@ -112,9 +112,11 @@ var statusReportDecoder = function (data) {
   var errorCode = error & 0x7fff;
 
   var decoded = {
+    uptime: readUInt32LE(data, 0), // time since last restart
     errorCode: errorCode, // current error code
     isSensing: isSensing, // is the ultrasonic sensor sensing water
     totalVolume: readUInt32LE(data, 6), // All-time aggregated water usage in litres
+    totalHeat: readUInt32LE(data, 10), // All-time aggregated heat in kCal above 30°C (default)
     leakState: data[22], // current water leakage state
     batteryActive: decodeBatteryLevel(data[23]), // battery mV active
     batteryRecovered: decodeBatteryLevel(data[24]), // battery mV recovered
@@ -205,12 +207,13 @@ var hardwareReportDecoder = function (data) {
   return {
     decoded: {
       firmwareVersion: firmwareVersion,
-      hardwareVersion: data[4],
+      hardwareVersion: readUInt8(data, 4),
       appState: appState,
       pipe: {
-        id: data[28],
+        id: readUInt8(data, 28),
         type: pipeType,
       },
+      flowDirection: readInt8(data, 29),
     },
     warnings: [],
   };
@@ -225,10 +228,16 @@ var settingsReportDecoder = function (data) {
 
   return {
     decoded: {
-      lorawanReportInterval: readUInt32LE(data, 5),
+      lorawanReportInterval: readUInt32LE(data, 5), // Time between reports on fport 2 in seconds
+      lorawanAckEnabled: Boolean(data[9]), // Lorarwan uplink acknowledge
+      heatThreshold: readQ8LE(data, 11), // Temperature threshold for incrementing the total heat accumulator
     },
     warnings: [],
   };
+};
+
+var readQ8LE = function (data, index) {
+  return parseFloat(readUInt16LE(data, index)) / 256;
 };
 
 var decodeBatteryLevel = function (input) {
@@ -300,6 +309,15 @@ var intToSemver = function (version) {
   var patch = version & 0xffff;
   return major + "." + minor + "." + patch;
 };
+
+function readUInt8(bytes, pos) {
+  return bytes[pos] & 0xff;
+}
+
+function readInt8(bytes, pos) {
+  var ref = readUInt8(bytes, pos);
+  return ref > 0x7f ? ref - 0x100 : ref;
+}
 
 function readUInt16LE(bytes, pos) {
   var value = bytes[pos] + (bytes[pos + 1] << 8);

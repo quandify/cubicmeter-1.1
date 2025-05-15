@@ -60,9 +60,11 @@ describe("decode uplink", async () => {
           hexBytes: "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455",
           type: "statusReport",
           decoded: {
+            uptime: 31456073,
             errorCode: 0,
             isSensing: true,
             totalVolume: 5342,
+            totalHeat: 0,
             leakState: 2,
             batteryActive: 3608,
             batteryRecovered: 3640,
@@ -271,9 +273,11 @@ describe("decode uplink", async () => {
               status: "ok",
               type: "statusReport",
               data: {
+                uptime: 30884511,
                 errorCode: 0,
                 isSensing: true,
                 totalVolume: 33655,
+                totalHeat: 243,
                 leakState: 0,
                 batteryActive: 3600,
                 batteryRecovered: 3624,
@@ -327,6 +331,7 @@ describe("decode uplink", async () => {
                   id: 1,
                   type: "Copper 15 mm",
                 },
+                flowDirection: 1,
               },
             },
           },
@@ -414,6 +419,8 @@ describe("decode uplink", async () => {
               decoded: {
                 data: {
                   lorawanReportInterval: 600,
+                  lorawanAckEnabled: false,
+                  heatThreshold: 30.0,
                 },
                 fPort: 19,
                 status: "ok",
@@ -497,6 +504,7 @@ describe("normalize uplink", async () => {
           hexBytes: "49FBDF010000DE1400000000000046EDDF0106FC8B0702E2E6535455",
           length: 28,
           decoded: {
+            uptime: 0,
             ambientTemperature: 22.5,
             batteryActive: 3608,
             batteryRecovered: 3640,
@@ -504,6 +512,7 @@ describe("normalize uplink", async () => {
             isSensing: true,
             leakState: 2,
             totalVolume: 5342,
+            totalHeat: 5342,
             waterTemperatureMax: 22,
             waterTemperatureMin: 21.5,
           },
