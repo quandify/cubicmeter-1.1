@@ -113,11 +113,12 @@ fport: 2
 
 ### Leak state
 
-| 0   | No leak     |
-| --- | ----------- |
-| 2   | No leak     |
-| 3   | Medium leak |
-| 4   | Large leak  |
+| Value | Description |
+| ----- | ----------- |
+| 0     | No leak     |
+| 2     | No leak     |
+| 3     | Medium leak |
+| 4     | Large leak  |
 
 ### Compact battery
 
